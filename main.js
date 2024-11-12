@@ -3,44 +3,78 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 let pythonProcess;
+let graphData = { nodes: [], links: [] };
 
-// Funkcja tworząca główne okno aplikacji
+const groupColors = {
+    'group1': '#FF5733',
+    'group2': '#33FF57',
+    'group3': '#3357FF',
+    'group4': '#FF33A1',
+};
+
 function createWindow() {
     const win = new BrowserWindow({
         width: 800,
         height: 600,
         webPreferences: {
-            //preload: path.join(__dirname, 'preload.js'),  // Opcjonalnie, jeśli chcesz używać preload.js
             nodeIntegration: true,
-            contextIsolation: false,  // Musi być ustawione na false dla nodeIntegration
+            contextIsolation: false,
         }
     });
 
     win.loadFile('index.html');
 }
 
-// Funkcja uruchamiana po włączeniu aplikacji
 app.whenReady().then(() => {
     createWindow();
 
-    // Uruchamianie procesu backendowego w Pythonie
     pythonProcess = spawn('python', ['backend.py']);
 
-    // Obsługa komunikacji: odbieranie danych kontaktu od interfejsu użytkownika
-    ipcMain.on('add-contact', (event, contact) => {
-        // Wysłanie danych do procesu Pythona przez stdin
-        pythonProcess.stdin.write(JSON.stringify(contact) + '\n');
+    ipcMain.on('add-contact', (event, { name, phone, tags }) => {
+        const newId = `node${graphData.nodes.length + 1}`;
+        graphData.nodes.push({
+            id: newId,
+            label: name,
+            phone: phone,
+            group: tags.join(','),
+        });
+
+        tags.forEach((tag) => {
+            const existingNodes = graphData.nodes.filter(n => n.group.includes(tag));
+            existingNodes.forEach(existingNode => {
+                if (existingNode.id !== newId) {
+                    graphData.links.push({
+                        source: newId,
+                        target: existingNode.id,
+                        relation: tag,
+                    });
+                }
+            });
+        });
+
+        event.reply('graph-updated', graphData);
     });
 
-    // Obsługa odbierania aktualizacji grafu z backendu
+    ipcMain.on('update-contact', (event, { id, name, phone, tags }) => {
+        // Aktualizacja kontaktu
+        const node = graphData.nodes.find(node => node.id === id);
+        if (node) {
+            node.label = name;
+            node.phone = phone;
+            node.group = tags.join(',');
+        }
+
+        event.reply('graph-updated', graphData);
+    });
+
     pythonProcess.stdout.on('data', (data) => {
-        // Konwersja danych JSON z backendu na obiekt JavaScript
-        const graphData = JSON.parse(data.toString());
-        // Przesłanie aktualnych danych grafu do frontend
+        const newGraphData = JSON.parse(data.toString());
+        graphData.nodes = newGraphData.nodes;
+        graphData.links = newGraphData.links;
+
         BrowserWindow.getAllWindows()[0].webContents.send('graph-updated', graphData);
     });
 
-    // Zamknij proces backendu, jeśli aplikacja się zamyka
     app.on('window-all-closed', () => {
         if (process.platform !== 'darwin') app.quit();
     });
@@ -49,4 +83,3 @@ app.whenReady().then(() => {
         if (pythonProcess) pythonProcess.kill();
     });
 });
-

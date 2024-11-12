@@ -1,12 +1,18 @@
 const { ipcRenderer } = require('electron');
 const cytoscape = require('cytoscape');
 
+// Kolory dla grup
+const groupColors = {
+    'group1': '#FF5733',  // Czerwony
+    'group2': '#33FF57',  // Zielony
+    'group3': '#3357FF',  // Niebieski
+    'group4': '#F0E68C',  // Żółty
+};
+
 // Inicjalizacja grafu
 let cy = cytoscape({
     container: document.getElementById('graph'),
-
-    elements: [], // Pusty graf na początku
-
+    elements: [],
     style: [
         {
             selector: 'node',
@@ -25,53 +31,72 @@ let cy = cytoscape({
                 'line-color': '#ccc',
                 'target-arrow-color': '#ccc',
                 'target-arrow-shape': 'triangle',
-                'label': 'data(label)'
             }
         }
     ],
-
-    layout: {
-        name: 'grid',
-        rows: 1
-    }
 });
 
-// Obsługa formularza dodawania kontaktów
-document.getElementById('add-contact-form').onsubmit = (event) => {
-    event.preventDefault();
+// Nasłuchiwanie na dodanie nowego kontaktu
+document.getElementById('add-contact-form').addEventListener('submit', (e) => {
+    e.preventDefault();
 
-    // Pobieranie wartości z formularza
     const name = document.getElementById('name').value;
-    const relationName = document.getElementById('relation_name').value;
-    const relationType = document.getElementById('relation_type').value;
+    const phone = document.getElementById('phone').value;
+    const tags = document.getElementById('tags').value.split(' ');  // Hashtagi
 
-    // Wysłanie danych do backendu
-    ipcRenderer.send('add-contact', { name, relationName, relationType });
+    ipcRenderer.send('add-contact', { name, phone, tags });
+});
 
-    // Wyczyszczenie formularza
-    document.getElementById('add-contact-form').reset();
-};
-
-// Odbieranie aktualizacji grafu z backendu
+// Nasłuchiwanie na aktualizację grafu
 ipcRenderer.on('graph-updated', (event, graphData) => {
-    // Zaktualizowanie grafu
-    cy.elements().remove();  // Usuwamy obecne elementy grafu
+    cy.elements().remove();  // Usuwanie poprzedniego grafu
 
-    // Dodawanie nowych węzłów i krawędzi
-    graphData.nodes.forEach((node) => {
+    // Dodawanie węzłów
+    graphData.nodes.forEach(node => {
         cy.add({
+            data: { id: node.id, label: node.label, phone: node.phone, group: node.group },
             group: 'nodes',
-            data: { id: node.id, label: node.label || node.id }
         });
     });
 
-    graphData.links.forEach((link) => {
+    // Dodawanie krawędzi
+    graphData.links.forEach(link => {
         cy.add({
+            data: { source: link.source, target: link.target, relation: link.relation },
             group: 'edges',
-            data: { source: link.source, target: link.target, label: link.relation || "" }
         });
     });
 
-    // Ustawienie nowego layoutu
+    // Kolorowanie krawędzi na podstawie grup
+    cy.edges().forEach(edge => {
+        const relation = edge.data('relation');
+        const color = groupColors[relation] || '#000000';
+        edge.style('line-color', color);
+    });
+
     cy.layout({ name: 'grid' }).run();
+});
+
+// Obsługa kliknięcia na węzeł
+cy.on('tap', 'node', (event) => {
+    const node = event.target;
+    const nodeData = node.data();
+
+    // Załaduj dane do formularza edycji
+    document.getElementById('edit-name').value = nodeData.label;
+    document.getElementById('edit-phone').value = nodeData.phone || '';  // Upewnij się, że telefon jest poprawnie wczytany
+    document.getElementById('edit-tags').value = nodeData.group || '';
+
+    document.getElementById('save-button').onclick = () => {
+        const updatedName = document.getElementById('edit-name').value;
+        const updatedPhone = document.getElementById('edit-phone').value;
+        const updatedTags = document.getElementById('edit-tags').value.split(' ');
+
+        ipcRenderer.send('update-contact', {
+            id: nodeData.id,
+            name: updatedName,
+            phone: updatedPhone,
+            tags: updatedTags
+        });
+    };
 });
