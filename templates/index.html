@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Kontaktów</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f3f3f3; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        form { margin-bottom: 20px; }
+        label, input, button { display: block; margin: 5px 0; }
+        iframe { width: 100%; height: 600px; border: 1px solid lightgray; }
+        #legend { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mapa Kontaktów</h1>
+        
+        <form action="/" method="post">
+            <label for="name">Imię i nazwisko:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="phone">Numer telefonu:</label>
+            <input type="text" id="phone" name="phone" required>
+            
+            <label for="tags">Hashtagi (grupy, oddzielone spacjami):</label>
+            <input type="text" id="tags" name="tags" placeholder="#grupa1 #grupa2" required>
+            
+            <button type="submit">Dodaj osobę</button>
+        </form>
+
+        <iframe src="{{ url_for('static', filename='graph.html') }}" frameborder="0"></iframe>
+        
+        <div id="legend">
+            <h3>Legenda Grup</h3>
+            <ul>
+                <li><span style="background-color: #FF5733; padding: 5px; border-radius: 5px;"></span> Grupa 1</li>
+                <li><span style="background-color: #33FF57; padding: 5px; border-radius: 5px;"></span> Grupa 2</li>
+                <li><span style="background-color: #3357FF; padding: 5px; border-radius: 5px;"></span> Grupa 3</li>
+                <li><span style="background-color: #F0E68C; padding: 5px; border-radius: 5px;"></span> Grupa 4</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
