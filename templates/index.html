@@ -31,7 +31,16 @@
         </form>
 
         <iframe src="{{ url_for('static', filename='graph.html') }}" frameborder="0"></iframe>
-        
+
+        <h3>Istniejące węzły:</h3>
+        <ul>
+            {% for node in graph_data['nodes'] %}
+                <li>
+                    <a href="{{ url_for('edit_node', node_id=node['id']) }}">{{ node['label'] }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+
         <div id="legend">
             <h3>Legenda Grup</h3>
             <ul>
