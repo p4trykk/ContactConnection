@@ -1,7 +1,7 @@
 const { ipcRenderer } = require('electron');
 const cytoscape = require('cytoscape');
 
-// Kolory dla grup
+// Definicja kolorów dla grup
 const groupColors = {
     'group1': '#FF5733',  // Czerwony
     'group2': '#33FF57',  // Zielony
@@ -28,21 +28,19 @@ let cy = cytoscape({
             selector: 'edge',
             style: {
                 'width': 3,
-                'line-color': '#ccc',
-                'target-arrow-color': '#ccc',
                 'target-arrow-shape': 'triangle',
             }
         }
     ],
 });
 
-// Nasłuchiwanie na dodanie nowego kontaktu
+// Dodawanie nowego kontaktu
 document.getElementById('add-contact-form').addEventListener('submit', (e) => {
     e.preventDefault();
 
     const name = document.getElementById('name').value;
     const phone = document.getElementById('phone').value;
-    const tags = document.getElementById('tags').value.split(' ');  // Hashtagi
+    const tags = document.getElementById('tags').value.split(' ');
 
     ipcRenderer.send('add-contact', { name, phone, tags });
 });
@@ -59,22 +57,24 @@ ipcRenderer.on('graph-updated', (event, graphData) => {
         });
     });
 
-    // Dodawanie krawędzi
+    // Dodawanie krawędzi z dynamicznym kolorem na podstawie `relation`
     graphData.links.forEach(link => {
+        const color = groupColors[link.relation] || '#000000';  // Kolor z obiektu groupColors
         cy.add({
             data: { source: link.source, target: link.target, relation: link.relation },
             group: 'edges',
+            style: { 'line-color': color, 'target-arrow-color': color }  // Ustawienie koloru krawędzi
         });
     });
 
-    // Kolorowanie krawędzi na podstawie grup
-    cy.edges().forEach(edge => {
-        const relation = edge.data('relation');
-        const color = groupColors[relation] || '#000000';
-        edge.style('line-color', color);
-    });
-
-    cy.layout({ name: 'grid' }).run();
+    // Zmiana układu grafu na dynamiczny
+    cy.layout({
+        name: 'cose',
+        animate: true,
+        animationDuration: 800,
+        fit: true,
+        padding: 10
+    }).run();
 });
 
 // Obsługa kliknięcia na węzeł
@@ -84,9 +84,10 @@ cy.on('tap', 'node', (event) => {
 
     // Załaduj dane do formularza edycji
     document.getElementById('edit-name').value = nodeData.label;
-    document.getElementById('edit-phone').value = nodeData.phone || '';  // Upewnij się, że telefon jest poprawnie wczytany
+    document.getElementById('edit-phone').value = nodeData.phone || '';
     document.getElementById('edit-tags').value = nodeData.group || '';
 
+    // Obsługa kliknięcia przycisku "Save"
     document.getElementById('save-button').onclick = () => {
         const updatedName = document.getElementById('edit-name').value;
         const updatedPhone = document.getElementById('edit-phone').value;

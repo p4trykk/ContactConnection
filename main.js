@@ -5,6 +5,7 @@ const { spawn } = require('child_process');
 let pythonProcess;
 let graphData = { nodes: [], links: [] };
 
+// Kolory dla grup
 const groupColors = {
     'group1': '#FF5733',
     'group2': '#33FF57',
@@ -56,12 +57,27 @@ app.whenReady().then(() => {
     });
 
     ipcMain.on('update-contact', (event, { id, name, phone, tags }) => {
-        // Aktualizacja kontaktu
         const node = graphData.nodes.find(node => node.id === id);
         if (node) {
             node.label = name;
             node.phone = phone;
             node.group = tags.join(',');
+
+            // Aktualizacja połączeń dla edytowanego węzła
+            graphData.links = graphData.links.filter(link => link.source !== id && link.target !== id);
+
+            tags.forEach(tag => {
+                const connectedNodes = graphData.nodes.filter(n => n.group.includes(tag));
+                connectedNodes.forEach(existingNode => {
+                    if (existingNode.id !== id) {
+                        graphData.links.push({
+                            source: id,
+                            target: existingNode.id,
+                            relation: tag,
+                        });
+                    }
+                });
+            });
         }
 
         event.reply('graph-updated', graphData);
