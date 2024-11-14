@@ -1,0 +1,97 @@
+/* style.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #333 !important;
+    color: #ffffff;
+    margin: 0;
+}
+
+@keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+header {
+    /* Animowany gradient */
+    background: linear-gradient(90deg, #0016c0, #0191eb);
+    background-size: 200% 200%;
+    animation: gradientAnimation 5s infinite linear alternate; 
+    padding: 20px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 50px;
+    color: white;
+}
+
+nav a {
+    color: white;
+    margin: 0 15px;
+    text-decoration: none;
+}
+
+nav a:hover {
+    color: #ffeb6a;
+}
+
+section.form-section, section.edit-section {
+    background: transparent;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 600px;
+    border: 2px solid;
+    border-image: linear-gradient(90deg, #0016c0, #0191eb) 1;
+    border-radius: 10px !important;
+    text-align: center;
+}
+
+.form-section input[type="text"],
+.edit-section input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 10px !important;
+    border: none;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.form-section button, 
+.edit-section button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px !important; 
+    border: none;
+    background: linear-gradient(90deg, #0016c0, #0191eb);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.list-section, .about-section {
+    background: #444;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 600px;
+    border-radius: 8px;
+}
+
+.graph-section {
+    background-color: #333 !important;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 750px;
+    border-radius: 8px;
+}
+
+.list-section a {
+    color: white !important; 
+    text-decoration: none !important; 
+}
+
+.list-section a:hover {
+    color: #6abcff;
+}

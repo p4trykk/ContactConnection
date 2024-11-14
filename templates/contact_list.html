@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Contact List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include "header.html" %}
+    <section class="list-section">
+        <h2>Lista Kontaktów</h2>
+        <ul>
+            {% for node in graph_data["nodes"] %}
+                <li>
+                    <a href="{{ url_for('edit_node', node_id=node['id']) }}">{{ node["label"] }} - {{ node["phone"] }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+</body>
+</html>
